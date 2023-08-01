@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work of the Ages</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+</head>
+<body>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <div id="game"></div>
+    <script>
+        class BallRolling extends Phaser.Scene {
+            boulder;
+            camera;
+            player;
+            music;
+            velocity;
+            preload() {
+                this.load.image('ball', 'static/boulder.png');
+                this.load.image('ground', 'map/map.png');
+                this.load.audio("music", "audio/meandthebirds.mp3");
+             // Load body shapes from JSON file generated using PhysicsEditor
+                this.load.json('shapes', 'static/map-shape.json');
+                this.load.image('player','static/sisyphus.png');
+                this.load.image("sign", "static/sign.png")
+            }
+            create() {
+                //add bg images
+                this.add.image(300,835,'sign');
+                //load and init
+                var shapes = this.cache.json.get('shapes');
+                this.velocity = 0;
+                this.music = this.sound.add("music",{loop: true, volume:0.1});
+                this.camera = this.cameras.main;
+                //create the ground
+                this.ground= this.matter.add.image(2000,1200, 'ground', null, {shape: shapes.map, isStatic: true});
+                //edit camera
+                this.camera.setBounds(0, -1000, 6000, 3000);
+                //create and edit player
+                this.player = this.matter.add.sprite(200, 700,'player');
+                this.player.setScale(0.1)
+                this.player.setMass(81);
+                this.player.setFriction(0.1);
+                this.player.setCollisionGroup(0);
+
+                //create and edit boulder
+                this.boulder = this.matter.add.image(300, 700, 'ball');
+                this.boulder.setCircle();
+                this.boulder.displayHeight = 100;
+                this.boulder.displayWidth = 100;
+                this.boulder.setFriction(0.1);
+                this.boulder.setBounce(0.3);
+                this.boulder.setMass(100);
+                this.boulder.setCollisionGroup(0);
+                
+                //var ground = this.matter.add.fromPhysicsEditor(0, window.innerHeight, shapes.Funny, {isStatic: true});
+                
+                this.camera.startFollow(this.player);
+
+            }
+            update() {
+                //roll back boulder
+                console.log(this.boulder.body.position.x)
+                if(this.boulder.body.position.x > 2869) {
+                    this.boulder.setCollisionGroup(-1);
+                    this.player.setCollisionGroup(-1);
+                } 
+                if(this.boulder.body.position.x < 300) {
+                    this.boulder.setCollisionGroup(0);
+                    this.player.setCollisionGroup(0);
+                }
+                if(this.music.isPlaying == false){
+                    this.music.play();
+                }
+                this.player.body.angle = 0;
+                this.boulder.setAngularVelocity(this.boulder.body.velocity.x/50);
+                var cursors = this.input.keyboard.createCursorKeys();
+                this.player.setVelocityX(this.velocity);
+                if(cursors.left.isDown){
+                    this.velocity = -3.2;
+                    this.player.setFlipX(true);
+                }
+                else if(cursors.right.isDown){
+                    this.velocity = 3.2;
+                    this.player.setFlipX(false);
+                }
+                else {
+                    this.velocity *= .9;
+                }
+                if(cursors.up.isDown) {
+                    this.player.setVelocityY(-3);
+                }
+            }
+        } 
+        var config = {
+        type: Phaser.AUTO,
+        width: 1200,
+        height: 700,
+        backgroundColor: '#1b1464',
+        parent: 'game',
+        physics: {
+            default: 'matter'
+            
+            
+        },
+        scene: BallRolling
+            
+        
+        
+    };
+    var game = new Phaser.Game(config);
+    </script>
+</body>
+</html>
